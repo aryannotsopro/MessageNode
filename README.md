@@ -3,6 +3,15 @@
 
 A full-featured social media REST API built with Node.js, Express, and MongoDB. Features include user authentication, posts with likes/comments, user profiles, and pagination.
 
+## 🌐 Live Demo
+
+**API Base URL:** https://messagenode-c5q9.onrender.com
+
+**Test Endpoints:**
+- Health Check: https://messagenode-c5q9.onrender.com/api/health
+- Get Posts: https://messagenode-c5q9.onrender.com/api/posts
+
+⚠️ **Note:** Free tier spins down after inactivity. First request may take 50 seconds to wake up.
 ## 🚀 Features
 
 - **User Authentication** - Secure signup/login with JWT and bcrypt password hashing
