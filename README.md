@@ -1,221 +1,115 @@
+# 🚀 MessageNode — Premium Social Experience
 
-# MessageNode - Social Media REST API
+![MessageNode UI](file:///C:/Users/aryan/.gemini/antigravity/brain/9e908e04-2302-4104-8a24-0656036dc8c3/home_page_premium_ui_1771834597561.png)
 
-A full-featured social media REST API built with Node.js, Express, and MongoDB. Features include user authentication, posts with likes/comments, user profiles, and pagination.
+MessageNode is a high-performance, full-stack social media application designed with a **premium Dribbble-inspired aesthetic**. It features a vibrant blue theme, smooth animations, and advanced social discovery tools, all built on a robust MERN stack architecture.
 
-## 🌐 Live Demo
+## 🌐 Live Deployment
 
-**API Base URL:** https://messagenode-c5q9.onrender.com
+- **Hosted App:** [https://messagenode-c5q9.onrender.com](https://messagenode-c5q9.onrender.com)
+- **API Status:** [https://messagenode-c5q9.onrender.com/api/health](https://messagenode-c5q9.onrender.com/api/health)
 
-**Test Endpoints:**
-- Health Check: https://messagenode-c5q9.onrender.com/api/health
-- Get Posts: https://messagenode-c5q9.onrender.com/api/posts
+---
 
-⚠️ **Note:** Free tier spins down after inactivity. First request may take 50 seconds to wake up.
-## 🚀 Features
+## ✨ Premium Features
 
-- **User Authentication** - Secure signup/login with JWT and bcrypt password hashing
-- **Post Management** - Create, read, update, delete posts with authorization
-- **Likes System** - Like/unlike posts with duplicate prevention
-- **Comments** - Add and delete comments on posts
-- **User Profiles** - View and update user profiles with post history
-- **Pagination** - Efficient data fetching with customizable page size
-- **Input Validation** - Request validation using express-validator
-- **MongoDB Atlas** - Cloud database with Mongoose ODM
+### 🎨 Visual Excellence
+- **Vibrant Blue Aesthetic:** A curated color palette (`#2C55E9`) designed for a modern, professional look.
+- **Advanced UI/UX:** Glassmorphism effects, smooth Framer Motion animations, and a consistent 40px rounded-corner design system.
+- **Dynamic Theming:** Deep support for both light and dark modes with high-contrast elements.
+
+### 📱 Social Discovery
+- **High-Impact Stories:** 24-hour disappearing stories with a premium circular viewing experience.
+- **Global Search:** Instant user discovery via the sidebar with detailed social metrics.
+- **Live Trending:** Real-time hashtags updated from global social pulses, integrated with external trend trackers.
+- **Deep-Link Messaging:** Seamless transition from profiles and search results directly into real-time conversations.
+
+### ⚡ Performance & Scale
+- **Optimized Feed:** Infinite scrolling with `IntersectionObserver` for a "bottomless" feel without load delays.
+- **Backend Pagination:** High-efficiency data fetching with paginated API endpoints.
+- **Database Indexing:** Optimized MongoDB sorting via `createdAt` indices for near-instant feed updates.
+- **Optimistic UI:** Instant feedback on likes and comments for zero-latency user interaction.
+
+---
 
 ## 🛠️ Tech Stack
 
-**Backend:**
-- Node.js
-- Express.js
-- MongoDB (Atlas)
-- Mongoose
-- JWT (jsonwebtoken)
-- bcryptjs
-- express-validator
+### Frontend
+- **React 19** with **TypeScript**
+- **Vite** for ultra-fast builds
+- **Tailwind CSS** & **Shadcn UI**
+- **Framer Motion** for premium animations
+- **Lucide React** for consistent iconography
+- **Socket.io-client** for real-time interactivity
 
-## 📋 Prerequisites
+### Backend
+- **Node.js** & **Express 5**
+- **MongoDB** with **Mongoose ODM**
+- **Socket.io** for real-time communication
+- **JWT & Bcryptjs** for secure authentication
+- **Multer** for high-performance image handling
 
-- Node.js (v20 or higher)
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js (v20+)
 - MongoDB Atlas account
-- npm or yarn
 
-## ⚙️ Installation
-
-1. Clone the repository:
+### 1. Clone & Install
 ```bash
 git clone https://github.com/aryannotsopro/MessageNode.git
 cd MessageNode
-Install dependencies:
+```
 
-bash
+### 2. Backend Setup
+```bash
 cd server
 npm install
-Create .env file in server/ folder:
-
-text
-MONGODB_URI=your_mongodb_connection_string
-JWT_SECRET=your_secret_key_here
-PORT=3000
-Start the server:
-
-bash
+# Create a .env file with:
+# PORT=3000
+# JWT_SECRET=your_secret
+# MONGODB_URI=your_mongo_url
 npm run dev
-Server will run on http://localhost:3000
+```
 
-📚 API Documentation
-Authentication
-Signup
-text
-POST /api/auth/signup
-Content-Type: application/json
+### 3. Frontend Setup
+```bash
+cd ../client
+npm install
+# Create a .env file with:
+# VITE_API_URL=http://localhost:3000/api
+npm run dev
+```
 
-{
-  "email": "user@example.com",
-  "password": "password123",
-  "name": "John Doe"
-}
-Login
-text
-POST /api/auth/login
-Content-Type: application/json
+---
 
-{
-  "email": "user@example.com",
-  "password": "password123"
-}
-Response:
+## 📁 Project Structure
 
-json
-{
-  "token": "jwt_token_here",
-  "userId": "user_id_here"
-}
-Posts
-Get All Posts (with pagination)
-text
-GET /api/posts?page=1&limit=10
-Get My Posts
-text
-GET /api/posts/me
-Authorization: Bearer {token}
-Create Post
-text
-POST /api/posts
-Authorization: Bearer {token}
-Content-Type: application/json
-
-{
-  "title": "Post Title",
-  "content": "Post content here",
-  "imageUrl": "https://example.com/image.jpg"
-}
-Update Post
-text
-PUT /api/posts/:id
-Authorization: Bearer {token}
-Content-Type: application/json
-
-{
-  "title": "Updated Title",
-  "content": "Updated content",
-  "imageUrl": "https://example.com/image.jpg"
-}
-Delete Post
-text
-DELETE /api/posts/:id
-Authorization: Bearer {token}
-Likes
-Like a Post
-text
-POST /api/posts/:id/like
-Authorization: Bearer {token}
-Unlike a Post
-text
-DELETE /api/posts/:id/like
-Authorization: Bearer {token}
-Comments
-Get Comments
-text
-GET /api/posts/:id/comments
-Add Comment
-text
-POST /api/posts/:id/comments
-Authorization: Bearer {token}
-Content-Type: application/json
-
-{
-  "text": "Great post!"
-}
-Delete Comment
-text
-DELETE /api/posts/:postId/comments/:commentId
-Authorization: Bearer {token}
-User Profiles
-Get My Profile
-text
-GET /api/users/me/profile
-Authorization: Bearer {token}
-Update My Profile
-text
-PUT /api/users/me/profile
-Authorization: Bearer {token}
-Content-Type: application/json
-
-{
-  "name": "Updated Name",
-  "status": "New status message"
-}
-View User Profile
-text
-GET /api/users/:id
-📁 Project Structure
-text
+```text
 MessageNode/
-├── server/
-│   ├── models/
-│   │   ├── User.js
-│   │   ├── Post.js
-│   │   └── Comment.js
-│   ├── routes/
-│   │   ├── auth.js
-│   │   ├── posts.js
-│   │   └── users.js
-│   ├── middleware/
-│   │   └── auth.js
-│   ├── index.js
-│   ├── .env
-│   └── package.json
+├── client/          # Vite + React Frontend
+│   ├── src/         # UI Components, Pages, and Services
+│   └── public/      # Static Assets
+├── server/          # Node + Express Backend
+│   ├── models/      # Mongoose Schemas (Post, Story, User, etc.)
+│   ├── routes/      # RESTful API Endpoints
+│   └── uploads/     # Local Image Storage
 └── README.md
-🔐 Security Features
-Password hashing with bcrypt (12 salt rounds)
+```
 
-JWT-based authentication
+---
 
-Protected routes with middleware
+## 👨‍💻 Author
 
-Input validation and sanitization
+**Aryan Chourasia**
+- GitHub: [@aryannotsopro](https://github.com/aryannotsopro)
+- LinkedIn: [Aryan Chourasia](https://www.linkedin.com/in/aryanchourasia/)
+- Email: [aryanc19444@gmail.com](mailto:aryanc19444@gmail.com)
 
-Password excluded from API responses
+---
 
-🧪 Testing
-Use Postman or any API testing tool to test the endpoints. Import the collection or manually test using the documentation above.
-
-👨‍💻 Author
-Aryan Chourasia
-
-GitHub: @aryannotsopro
-(https://github.com/aryannotsopro)
-
-LinkedIn: Aryan Chourasia
-(https://www.linkedin.com/in/aryanchourasia/)
-
-Email: aryanc19444@gmail.com
-
-📝 License
-This project is open source and available under the MIT License.
-
-🙏 Acknowledgments
-Built as a learning project to demonstrate RESTful API design
-
-Inspired by social media platforms like Twitter/Instagram
+## 📝 License
+This project is open-source and available under the **MIT License**.
+Built with ❤️ to demonstrate the intersection of advanced design and scalable architecture.
