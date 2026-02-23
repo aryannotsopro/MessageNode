@@ -96,7 +96,12 @@ app.use(express.static(path.join(__dirname, '../client/dist')));
 
 // The "catchall" handler: for any request that doesn't
 // match one above, send back React's index.html file.
-app.get('/:path*', (req, res) => {
+app.use((req, res, next) => {
+  // If it's an API request that didn't match any route, return 404
+  if (req.path.startsWith('/api')) {
+    return res.status(404).json({ message: 'API route not found' });
+  }
+  // Otherwise, serve the frontend
   res.sendFile(path.join(__dirname, '../client/dist/index.html'));
 });
 
