@@ -1,87 +1,95 @@
-# 🚀 MessageNode — Premium Social Experience
+# MessageNode — Premium Social Media Experience
 
-![MessageNode UI](file:///C:/Users/aryan/.gemini/antigravity/brain/9e908e04-2302-4104-8a24-0656036dc8c3/home_page_premium_ui_1771834597561.png)
+MessageNode is a full-featured social media platform built with the MERN stack (MongoDB, Express, React, Node.js). It features a **premium, Dribbble-inspired UI** with a vibrant blue theme, smooth animations, and optimized performance for a seamless social experience.
 
-MessageNode is a high-performance, full-stack social media application designed with a **premium Dribbble-inspired aesthetic**. It features a vibrant blue theme, smooth animations, and advanced social discovery tools, all built on a robust MERN stack architecture.
+## 🌐 Live Demo
 
-## 🌐 Live Deployment
+**Live App:** [https://messagenode-c5q9.onrender.com](https://messagenode-c5q9.onrender.com) (Frontend & Backend)
 
-- **Hosted App:** [https://messagenode-c5q9.onrender.com](https://messagenode-c5q9.onrender.com)
-- **API Status:** [https://messagenode-c5q9.onrender.com/api/health](https://messagenode-c5q9.onrender.com/api/health)
+**Test Endpoints:**
+- **Health Check:** [https://messagenode-c5q9.onrender.com/api/health](https://messagenode-c5q9.onrender.com/api/health)
+- **Get Posts:** [https://messagenode-c5q9.onrender.com/api/posts](https://messagenode-c5q9.onrender.com/api/posts)
+
+> ⚠️ **Note:** Free tier spins down after inactivity. First request may take 50 seconds to wake up.
 
 ---
 
-## ✨ Premium Features
+## 🚀 Key Features
 
-### 🎨 Visual Excellence
-- **Vibrant Blue Aesthetic:** A curated color palette (`#2C55E9`) designed for a modern, professional look.
-- **Advanced UI/UX:** Glassmorphism effects, smooth Framer Motion animations, and a consistent 40px rounded-corner design system.
-- **Dynamic Theming:** Deep support for both light and dark modes with high-contrast elements.
+### 🎨 Premium UI & Experience
+- **Vibrant Blue Aesthetic**: A modern design system centered around deep blues and soft, premium aesthetics.
+- **Advanced Layout**: 40px rounded corners (2.5rem), glassmorphism effects, and professional typography.
+- **Smooth Animations**: High-quality transitions using Framer Motion.
+- **Full Responsiveness**: Seamless experience across mobile, tablet, and desktop.
 
-### 📱 Social Discovery
-- **High-Impact Stories:** 24-hour disappearing stories with a premium circular viewing experience.
-- **Global Search:** Instant user discovery via the sidebar with detailed social metrics.
-- **Live Trending:** Real-time hashtags updated from global social pulses, integrated with external trend trackers.
-- **Deep-Link Messaging:** Seamless transition from profiles and search results directly into real-time conversations.
+### 📱 Social & Messaging
+- **Real-Time Messaging**: Instant chatting powered by Socket.io with typing indicators.
+- **Disappearing Stories**: 24-hour expiration system for temporary photo updates.
+- **Dynamic Feed**: Like, comment, and interact with posts in real-time.
+- **Global Discovery**: Search for users worldwide with detailed social follow/following metrics.
+- **Live Trending**: Real-time hashtags pulled from global trends with deep links to trend trackers.
 
 ### ⚡ Performance & Scale
-- **Optimized Feed:** Infinite scrolling with `IntersectionObserver` for a "bottomless" feel without load delays.
-- **Backend Pagination:** High-efficiency data fetching with paginated API endpoints.
-- **Database Indexing:** Optimized MongoDB sorting via `createdAt` indices for near-instant feed updates.
-- **Optimistic UI:** Instant feedback on likes and comments for zero-latency user interaction.
+- **Backend Pagination**: Efficient data fetching using `page` and `limit` parameters to handle thousands of posts.
+- **Database Indexing**: Optimized MongoDB sorting via `createdAt` indices for near-instant feed loading.
+- **Infinite Scroll**: A "bottomless" home feed using high-performance `IntersectionObserver`.
+- **Optimistic Updates**: Perceived zero-latency interactions for likes and comments.
 
 ---
 
 ## 🛠️ Tech Stack
 
-### Frontend
-- **React 19** with **TypeScript**
-- **Vite** for ultra-fast builds
-- **Tailwind CSS** & **Shadcn UI**
-- **Framer Motion** for premium animations
-- **Lucide React** for consistent iconography
-- **Socket.io-client** for real-time interactivity
+**Frontend:**
+- React 19 + TypeScript
+- Vite (Build Tool)
+- Tailwind CSS (Styling)
+- Framer Motion (Animations)
+- Socket.io-client (Real-time updates)
 
-### Backend
-- **Node.js** & **Express 5**
-- **MongoDB** with **Mongoose ODM**
-- **Socket.io** for real-time communication
-- **JWT & Bcryptjs** for secure authentication
-- **Multer** for high-performance image handling
+**Backend:**
+- Node.js + Express.js
+- MongoDB + Mongoose (Atlas)
+- Socket.io (Real-time engine)
+- JWT + Bcryptjs (Secure Authentication)
+- Multer (File Uploads)
 
 ---
 
-## 🚀 Getting Started
+## 📋 Prerequisites
 
-### Prerequisites
-- Node.js (v20+)
+- Node.js (v20 or higher)
 - MongoDB Atlas account
+- npm or yarn
 
-### 1. Clone & Install
-```bash
-git clone https://github.com/aryannotsopro/MessageNode.git
-cd MessageNode
-```
+---
 
-### 2. Backend Setup
-```bash
-cd server
-npm install
-# Create a .env file with:
-# PORT=3000
-# JWT_SECRET=your_secret
-# MONGODB_URI=your_mongo_url
-npm run dev
-```
+## ⚙️ Installation & Setup
 
-### 3. Frontend Setup
-```bash
-cd ../client
-npm install
-# Create a .env file with:
-# VITE_API_URL=http://localhost:3000/api
-npm run dev
-```
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/aryannotsopro/MessageNode.git
+   cd MessageNode
+   ```
+
+2. **Configure Backend:**
+   ```bash
+   cd server
+   npm install
+   # Create a .env file:
+   # MONGODB_URI=your_mongodb_connection_string
+   # JWT_SECRET=your_secret_key
+   # PORT=3000
+   npm run dev
+   ```
+
+3. **Configure Frontend:**
+   ```bash
+   cd ../client
+   npm install
+   # Create a .env file:
+   # VITE_API_URL=http://localhost:3000/api
+   npm run dev
+   ```
 
 ---
 
@@ -89,27 +97,43 @@ npm run dev
 
 ```text
 MessageNode/
-├── client/          # Vite + React Frontend
-│   ├── src/         # UI Components, Pages, and Services
-│   └── public/      # Static Assets
-├── server/          # Node + Express Backend
-│   ├── models/      # Mongoose Schemas (Post, Story, User, etc.)
-│   ├── routes/      # RESTful API Endpoints
-│   └── uploads/     # Local Image Storage
+├── client/              # React frontend (Vite)
+│   ├── src/
+│   │   ├── components/  # Reusable UI components
+│   │   ├── pages/       # Home, Profile, Explore, etc.
+│   │   └── services/    # API calls with Axios
+├── server/              # Node.js backend (Express)
+│   ├── models/          # Post, Story, User, Notification
+│   ├── routes/          # API endpoint logic
+│   └── middleware/      # Auth and Upload handling
 └── README.md
 ```
 
 ---
 
-## 👨‍💻 Author
+## 🔐 Security Features
+- **Password Hashing**: Secure encryption with bcrypt (12 salt rounds).
+- **JWT Auth**: Token-based authentication for stateful sessions.
+- **Protected Routes**: Middleware-driven access control.
+- **Input Validation**: Request sanitization using express-validator.
 
+---
+
+## 🧪 Testing
+Use Postman or any API testing tool to test the endpoints. Import the collection or manually test using the documentation above.
+
+---
+
+## 👨‍💻 Author
 **Aryan Chourasia**
-- GitHub: [@aryannotsopro](https://github.com/aryannotsopro)
-- LinkedIn: [Aryan Chourasia](https://www.linkedin.com/in/aryanchourasia/)
-- Email: [aryanc19444@gmail.com](mailto:aryanc19444@gmail.com)
+
+- **GitHub**: [@aryannotsopro](https://github.com/aryannotsopro)
+- **LinkedIn**: [Aryan Chourasia](https://www.linkedin.com/in/aryanchourasia/)
+- **Email**: aryanc19444@gmail.com
 
 ---
 
 ## 📝 License
-This project is open-source and available under the **MIT License**.
-Built with ❤️ to demonstrate the intersection of advanced design and scalable architecture.
+This project is open source and available under the **MIT License**.
+
+Built with ❤️ to demonstrate modern full-stack engineering and advanced UI design.
