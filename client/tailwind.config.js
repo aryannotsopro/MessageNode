@@ -44,6 +44,14 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        "bubble-in": {
+          DEFAULT: "hsl(var(--bubble-in))",
+          foreground: "hsl(var(--bubble-in-fg))",
+        },
+        "bubble-out": {
+          DEFAULT: "hsl(var(--bubble-out))",
+          foreground: "hsl(var(--bubble-out-fg))",
+        },
         mn: {
           primary: '#6366f1',
           'primary-dark': '#4f46e5',

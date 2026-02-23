@@ -1,10 +1,17 @@
 export interface User {
-  _id: string
-  name: string
-  email: string
-  status?: string
-  posts?: Post[]
-  createdAt?: string
+  _id: string;
+  name: string;
+  email: string;
+  status?: string;
+  profilePicture?: string;
+  coverPicture?: string;
+  location?: string;
+  website?: string;
+  posts?: string[];
+  followers?: string[] | User[];
+  following?: string[] | User[];
+  bookmarks?: string[];
+  createdAt?: string;
 }
 
 export interface Comment {
@@ -40,9 +47,28 @@ export interface ApiError {
 
 export interface PaginatedResponse<T> {
   posts: T[]
-  totalPosts: number
-  currentPage: number
-  totalPages: number
+  pagination: {
+    currentPage: number
+    totalPages: number
+    totalPosts: number
+    hasMore: boolean
+  }
+}
+
+export interface Story {
+  _id: string;
+  creator: User;
+  imageUrl: string;
+  caption?: string;
+  viewers: string[];
+  expiresAt: string;
+  createdAt: string;
+}
+
+export interface StoryGroup {
+  user: User;
+  stories: Story[];
+  hasUnviewed: boolean;
 }
 
 export type ToastType = 'info' | 'success' | 'error' | 'warning'

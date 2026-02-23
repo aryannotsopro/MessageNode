@@ -31,9 +31,9 @@ export function Avatar({ name, src, size = 'md', className, showOnline }: Avatar
         )}
       >
         {src ? (
-          <img 
-            src={src} 
-            alt={name} 
+          <img
+            src={src}
+            alt={name}
             className="w-full h-full object-cover"
             onError={(e) => {
               (e.target as HTMLImageElement).style.display = 'none'
@@ -44,7 +44,10 @@ export function Avatar({ name, src, size = 'md', className, showOnline }: Avatar
         )}
       </motion.div>
       {showOnline && (
-        <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full" />
+        <span
+          className="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2"
+          style={{ background: '#00ff88', borderColor: '#060b14' }}
+        />
       )}
     </div>
   )
@@ -52,10 +55,9 @@ export function Avatar({ name, src, size = 'md', className, showOnline }: Avatar
 
 export function AvatarSkeleton({ size = 'md', className }: { size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl', className?: string }) {
   return (
-    <div className={cn(
-      'rounded-full bg-slate-200 animate-pulse',
-      sizes[size],
-      className
-    )} />
+    <div
+      className={cn('rounded-full shimmer', sizes[size], className)}
+      style={{ background: 'rgba(13,17,28,0.8)', border: '1px solid rgba(0,229,255,0.08)' }}
+    />
   )
 }

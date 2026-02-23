@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, X, Image, Type, AlignLeft, Send, Loader2 } from 'lucide-react'
+import { Plus, X, Image, Type, AlignLeft, Loader2, Sparkles } from 'lucide-react'
 import { Avatar } from './Avatar'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/context/AuthContext'
@@ -25,7 +25,6 @@ export function CreatePost({ onSubmit }: CreatePostProps) {
     setIsSubmitting(true)
     try {
       await onSubmit({ title, content, imageUrl })
-      // Reset form
       setTitle('')
       setContent('')
       setImageUrl('')
@@ -42,32 +41,41 @@ export function CreatePost({ onSubmit }: CreatePostProps) {
     setImageUrl('')
   }
 
+  const cardStyle = {
+    background: 'rgba(13,17,28,0.85)',
+    backdropFilter: 'blur(20px)',
+    border: `1px solid ${isExpanded ? 'rgba(0,229,255,0.22)' : 'rgba(0,229,255,0.08)'}`,
+    boxShadow: isExpanded ? '0 0 30px rgba(0,229,255,0.06), 0 8px 32px rgba(0,0,0,0.4)' : 'none',
+    transition: 'border-color 0.3s ease, box-shadow 0.3s ease',
+  };
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       className="w-full"
     >
-      <div className={cn(
-        'rounded-2xl border bg-white shadow-sm overflow-hidden transition-all duration-300',
-        isExpanded ? 'border-indigo-200 shadow-lg shadow-indigo-500/10' : 'border-slate-200 hover:border-slate-300'
-      )}>
+      <div className="rounded-2xl overflow-hidden" style={cardStyle}>
         {/* Collapsed State */}
         {!isExpanded && (
           <motion.button
             onClick={() => setIsExpanded(true)}
-            className="w-full p-4 flex items-center gap-3 text-left hover:bg-slate-50 transition-colors"
+            className="w-full p-4 flex items-center gap-3 text-left transition-all"
             whileHover={{ scale: 1.005 }}
-            whileTap={{ scale: 0.995 }}
+            whileTap={{ scale: 0.997 }}
+            style={{ background: 'transparent' }}
           >
             <Avatar name={user?.name || ''} size="md" />
             <div className="flex-1">
-              <p className="text-slate-500 font-medium">
+              <p className="text-sm font-medium" style={{ color: 'rgba(255,255,255,0.3)' }}>
                 What's on your mind, {user?.name?.split(' ')[0]}?
               </p>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center">
-              <Plus className="w-5 h-5 text-indigo-600" />
+            <div
+              className="w-9 h-9 rounded-xl flex items-center justify-center"
+              style={{ background: 'rgba(0,229,255,0.1)', border: '1px solid rgba(0,229,255,0.2)' }}
+            >
+              <Plus className="w-5 h-5" style={{ color: '#00e5ff' }} />
             </div>
           </motion.button>
         )}
@@ -89,8 +97,8 @@ export function CreatePost({ onSubmit }: CreatePostProps) {
                   <div className="flex items-center gap-3">
                     <Avatar name={user?.name || ''} size="md" />
                     <div>
-                      <p className="font-semibold text-slate-900">{user?.name}</p>
-                      <p className="text-sm text-slate-500">Creating a post</p>
+                      <p className="font-semibold text-white/85 text-sm">{user?.name}</p>
+                      <p className="text-xs" style={{ color: 'rgba(0,229,255,0.5)' }}>Transmitting a post</p>
                     </div>
                   </div>
                   <motion.button
@@ -98,62 +106,51 @@ export function CreatePost({ onSubmit }: CreatePostProps) {
                     onClick={handleCancel}
                     whileHover={{ scale: 1.1, rotate: 90 }}
                     whileTap={{ scale: 0.9 }}
-                    className="p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                    className="p-2 rounded-lg transition-colors"
+                    style={{ color: 'rgba(255,255,255,0.3)' }}
                   >
                     <X className="w-5 h-5" />
                   </motion.button>
                 </div>
 
+                {/* Divider */}
+                <div style={{ height: '1px', background: 'rgba(0,229,255,0.07)' }} />
+
                 {/* Title Input */}
                 <div className="relative">
-                  <Type className="absolute left-3 top-3 w-5 h-5 text-slate-400" />
+                  <Type className="absolute left-3 top-3.5 w-4 h-4" style={{ color: 'rgba(0,229,255,0.4)' }} />
                   <input
                     type="text"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    placeholder="Give your post a title..."
-                    className={cn(
-                      'w-full pl-11 pr-4 py-3 rounded-xl border bg-white text-sm font-semibold',
-                      'placeholder:text-slate-400 placeholder:font-normal',
-                      'focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500',
-                      'border-slate-200'
-                    )}
+                    placeholder="Post title..."
+                    className="input-cyber w-full pl-10 pr-4 py-3 rounded-xl text-sm font-semibold"
                     autoFocus
                   />
                 </div>
 
                 {/* Content Input */}
                 <div className="relative">
-                  <AlignLeft className="absolute left-3 top-3 w-5 h-5 text-slate-400" />
+                  <AlignLeft className="absolute left-3 top-3.5 w-4 h-4" style={{ color: 'rgba(0,229,255,0.4)' }} />
                   <textarea
                     ref={textareaRef}
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
                     placeholder="Share your thoughts..."
                     rows={4}
-                    className={cn(
-                      'w-full pl-11 pr-4 py-3 rounded-xl border bg-white text-sm',
-                      'placeholder:text-slate-400',
-                      'focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500',
-                      'border-slate-200 resize-none'
-                    )}
+                    className="input-cyber w-full pl-10 pr-4 py-3 rounded-xl text-sm resize-none"
                   />
                 </div>
 
-                {/* Image URL Input */}
+                {/* Image URL */}
                 <div className="relative">
-                  <Image className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                  <Image className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'rgba(0,229,255,0.4)' }} />
                   <input
                     type="url"
                     value={imageUrl}
                     onChange={(e) => setImageUrl(e.target.value)}
-                    placeholder="Add an image URL (optional)..."
-                    className={cn(
-                      'w-full pl-11 pr-4 py-3 rounded-xl border bg-white text-sm',
-                      'placeholder:text-slate-400',
-                      'focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500',
-                      'border-slate-200'
-                    )}
+                    placeholder="Image URL (optional)..."
+                    className="input-cyber w-full pl-10 pr-4 py-3 rounded-xl text-sm"
                   />
                 </div>
 
@@ -164,7 +161,8 @@ export function CreatePost({ onSubmit }: CreatePostProps) {
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: 'auto' }}
                       exit={{ opacity: 0, height: 0 }}
-                      className="rounded-xl overflow-hidden bg-slate-100"
+                      className="rounded-xl overflow-hidden"
+                      style={{ border: '1px solid rgba(0,229,255,0.12)' }}
                     >
                       <img
                         src={imageUrl}
@@ -178,14 +176,19 @@ export function CreatePost({ onSubmit }: CreatePostProps) {
                   )}
                 </AnimatePresence>
 
-                {/* Submit Button */}
-                <div className="flex gap-3 pt-2">
+                {/* Buttons */}
+                <div className="flex gap-3 pt-1">
                   <motion.button
                     type="button"
                     onClick={handleCancel}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className="flex-1 px-4 py-3 rounded-xl font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors"
+                    className="flex-1 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all"
+                    style={{
+                      background: 'rgba(255,255,255,0.04)',
+                      border: '1px solid rgba(255,255,255,0.08)',
+                      color: 'rgba(255,255,255,0.45)',
+                    }}
                   >
                     Cancel
                   </motion.button>
@@ -195,19 +198,18 @@ export function CreatePost({ onSubmit }: CreatePostProps) {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     className={cn(
-                      'flex-1 px-4 py-3 rounded-xl font-semibold text-white',
-                      'bg-gradient-to-r from-indigo-600 to-violet-600',
-                      'hover:from-indigo-700 hover:to-violet-700',
-                      'disabled:opacity-50 disabled:cursor-not-allowed',
-                      'flex items-center justify-center gap-2'
+                      'flex-1 px-4 py-2.5 rounded-xl font-bold text-sm',
+                      'flex items-center justify-center gap-2',
+                      'disabled:opacity-40 disabled:cursor-not-allowed',
+                      'btn-neon-solid'
                     )}
                   >
                     {isSubmitting ? (
-                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
                       <>
-                        <Send className="w-4 h-4" />
-                        Post
+                        <Sparkles className="w-4 h-4" />
+                        Transmit
                       </>
                     )}
                   </motion.button>

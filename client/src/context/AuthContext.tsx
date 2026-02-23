@@ -21,15 +21,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const isAuthenticated = !!token && !!user
 
-  const fetchUser = useCallback(async () => {
-    if (!token) {
+  const fetchUser = useCallback(async (tokenOverride?: string) => {
+    const activeToken = tokenOverride || token || localStorage.getItem('token')
+    if (!activeToken) {
       setIsLoading(false)
       return
     }
 
     try {
       const { data } = await authApi.getMe()
-      setUser(data.user)
+      setUser(data)
     } catch (error) {
       console.error('Failed to fetch user:', error)
       localStorage.removeItem('token')
@@ -49,7 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('token', newToken)
     localStorage.setItem('userId', userId)
     setToken(newToken)
-    await fetchUser()
+    await fetchUser(newToken)
   }, [fetchUser])
 
   const logout = useCallback(() => {

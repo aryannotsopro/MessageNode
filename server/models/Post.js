@@ -5,11 +5,11 @@ const postSchema = new Schema(
   {
     title: {
       type: String,
-      required: true
+      default: ''
     },
     imageUrl: {
       type: String,
-      required: true
+      default: ''
     },
     content: {
       type: String,
@@ -25,9 +25,28 @@ const postSchema = new Schema(
         type: Schema.Types.ObjectId,
         ref: 'User'
       }
+    ],
+    comments: [
+      {
+        text: {
+          type: String,
+          required: true
+        },
+        author: {
+          type: Schema.Types.ObjectId,
+          ref: 'User',
+          required: true
+        },
+        createdAt: {
+          type: Date,
+          default: Date.now
+        }
+      }
     ]
   },
   { timestamps: true }
 );
+
+postSchema.index({ createdAt: -1 });
 
 module.exports = mongoose.model('Post', postSchema);

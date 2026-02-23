@@ -1,313 +1,265 @@
 const router = require('express').Router();
 const auth = require('../middleware/auth');
 const Post = require('../models/Post');
+const Notification = require('../models/Notification');
 const User = require('../models/User');
-const { body, validationResult } = require('express-validator');
-const Comment = require('../models/Comment');
 
-
-// Create a post (protected)
-router.post(
-  '/',
-  auth,
-  [
-    body('title').trim().isLength({ min: 5 }).withMessage('Title must be at least 5 characters'),
-    body('content').trim().isLength({ min: 5 }).withMessage('Content must be at least 5 characters'),
-    body('imageUrl').trim().isURL().withMessage('Please provide a valid image URL')
-  ],
-  async (req, res) => {
-    try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(422).json({ message: 'Validation failed', errors: errors.array() });
-      }
-
-      const { title, content, imageUrl } = req.body;
-
-      const post = await Post.create({
-        title: title.trim(),
-        content: content.trim(),
-        imageUrl: imageUrl.trim(),
-        creator: req.userId
-      });
-
-      // Add post to user's posts array
-      const user = await User.findById(req.userId);
-      user.posts.push(post._id);
-      await user.save();
-
-      return res.status(201).json({
-        message: 'Post created successfully',
-        post
-      });
-    } catch (err) {
-      return res.status(500).json({ message: 'Server error' });
-    }
-  }
-);
-
-// Get all posts with pagination (public)
+// Get all posts (with pagination)
 router.get('/', async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    const totalPosts = await Post.countDocuments();
     const posts = await Post.find()
-      .populate('creator', 'name email')
+      .populate('creator', 'name email profilePicture')
+      .populate({
+        path: 'comments.author',
+        select: 'name email profilePicture'
+      })
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
 
-    const totalPages = Math.ceil(totalPosts / limit);
+    const total = await Post.countDocuments();
 
-    return res.json({
+    res.json({
       posts,
       pagination: {
         currentPage: page,
-        totalPages,
-        totalPosts,
-        postsPerPage: limit,
-        hasNextPage: page < totalPages,
-        hasPrevPage: page > 1
+        totalPages: Math.ceil(total / limit),
+        totalPosts: total,
+        hasMore: page * limit < total
       }
     });
   } catch (err) {
-    return res.status(500).json({ message: 'Server error' });
+    console.error('GET /posts ERROR:', err.message);
+    res.status(500).json({ message: err.message });
   }
 });
 
-// Get only my posts (protected)
-router.get('/me', auth, async (req, res) => {
-  try {
-    const myPosts = await Post.find({ creator: req.userId })
-      .populate('creator', 'name email')
-      .sort({ createdAt: -1 });
-    
-    return res.json(myPosts);
-  } catch (err) {
-    return res.status(500).json({ message: 'Server error' });
-  }
-});
-
-// Get single post by ID (public)
+// Get single post
 router.get('/:id', async (req, res) => {
   try {
-    const post = await Post.findById(req.params.id).populate('creator', 'name email');
-    
+    const post = await Post.findById(req.params.id)
+      .populate('creator', 'name email profilePicture')
+      .populate('comments.author', 'name email profilePicture');
+
     if (!post) {
       return res.status(404).json({ message: 'Post not found' });
     }
-    
-    return res.json(post);
+    res.json(post);
   } catch (err) {
-    return res.status(400).json({ message: 'Invalid post ID' });
+    res.status(500).json({ message: err.message });
   }
 });
 
-// Update a post (protected, only owner)
-router.put(
-  '/:id',
-  auth,
-  [
-    body('title').trim().isLength({ min: 5 }).withMessage('Title must be at least 5 characters'),
-    body('content').trim().isLength({ min: 5 }).withMessage('Content must be at least 5 characters'),
-    body('imageUrl').trim().isURL().withMessage('Please provide a valid image URL')
-  ],
-  async (req, res) => {
-    try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(422).json({ message: 'Validation failed', errors: errors.array() });
-      }
-
-      const { title, content, imageUrl } = req.body;
-
-      const post = await Post.findById(req.params.id);
-      
-      if (!post) {
-        return res.status(404).json({ message: 'Post not found' });
-      }
-
-      // Check ownership
-      if (post.creator.toString() !== req.userId) {
-        return res.status(403).json({ message: 'Not authorized' });
-      }
-
-      post.title = title.trim();
-      post.content = content.trim();
-      post.imageUrl = imageUrl.trim();
-      
-      const updated = await post.save();
-
-      return res.json({
-        message: 'Post updated successfully',
-        post: updated
-      });
-    } catch (err) {
-      return res.status(400).json({ message: 'Invalid post ID' });
-    }
-  }
-);
-
-// Delete a post (protected, only owner)
-router.delete('/:id', auth, async (req, res) => {
+// Get user's posts
+router.get('/user/:userId', async (req, res) => {
   try {
-    const post = await Post.findById(req.params.id);
-    
-    if (!post) {
-      return res.status(404).json({ message: 'Post not found' });
-    }
+    const posts = await Post.find({ creator: req.params.userId })
+      .populate('creator', 'name email profilePicture')
+      .populate('comments.author', 'name email profilePicture')
+      .sort({ createdAt: -1 });
 
-    // Check ownership
-    if (post.creator.toString() !== req.userId) {
-      return res.status(403).json({ message: 'Not authorized' });
-    }
-
-    await Post.findByIdAndDelete(req.params.id);
-
-    // Remove post from user's posts array
-    const user = await User.findById(req.userId);
-    user.posts.pull(req.params.id);
-    await user.save();
-
-    return res.json({ message: 'Post deleted successfully' });
+    res.json(posts);
   } catch (err) {
-    return res.status(400).json({ message: 'Invalid post ID' });
+    console.error('GET /posts/user/:userId ERROR:', err.message);
+    res.status(500).json({ message: err.message });
   }
 });
 
-// Like a post (protected)
+// Create post
+router.post('/', auth, async (req, res) => {
+  try {
+    const { title, content, imageUrl } = req.body;
+
+    if (!content || content.trim() === '') {
+      return res.status(400).json({ message: 'Content is required' });
+    }
+
+    const post = new Post({
+      title: title || '',
+      content: content.trim(),
+      imageUrl: imageUrl || '',
+      creator: req.userId,
+      likes: [],
+      comments: []
+    });
+
+    await post.save();
+    await post.populate('creator', 'name email profilePicture');
+
+    res.status(201).json(post);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// Like post
 router.post('/:id/like', auth, async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
-    
     if (!post) {
       return res.status(404).json({ message: 'Post not found' });
     }
 
-    // Check if already liked
-    if (post.likes.includes(req.userId)) {
-      return res.status(400).json({ message: 'Post already liked' });
+    const likeIndex = post.likes.indexOf(req.userId);
+    if (likeIndex === -1) {
+      post.likes.push(req.userId);
+
+      // Create notification for post owner (don't notify self)
+      if (post.creator.toString() !== req.userId) {
+        const notification = new Notification({
+          sender: req.userId,
+          recipient: post.creator,
+          type: 'like',
+          post: post._id
+        });
+        await notification.save();
+      }
     }
 
-    // Add user to likes array
-    post.likes.push(req.userId);
     await post.save();
+    await post.populate('creator', 'name email profilePicture');
+    await post.populate('comments.author', 'name email profilePicture');
 
-    return res.json({
-      message: 'Post liked successfully',
-      likesCount: post.likes.length
-    });
+    res.json(post);
   } catch (err) {
-    return res.status(400).json({ message: 'Invalid post ID' });
+    res.status(500).json({ message: err.message });
   }
 });
 
-// Unlike a post (protected)
-router.delete('/:id/like', auth, async (req, res) => {
+// Unlike post
+router.post('/:id/unlike', auth, async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
-    
     if (!post) {
       return res.status(404).json({ message: 'Post not found' });
     }
 
-    // Check if not liked yet
-    if (!post.likes.includes(req.userId)) {
-      return res.status(400).json({ message: 'Post not liked yet' });
+    const likeIndex = post.likes.indexOf(req.userId);
+    if (likeIndex !== -1) {
+      post.likes.splice(likeIndex, 1);
     }
 
-    // Remove user from likes array
-    post.likes.pull(req.userId);
     await post.save();
+    await post.populate('creator', 'name email profilePicture');
+    await post.populate('comments.author', 'name email profilePicture');
 
-    return res.json({
-      message: 'Post unliked successfully',
-      likesCount: post.likes.length
-    });
+    res.json(post);
   } catch (err) {
-    return res.status(400).json({ message: 'Invalid post ID' });
+    res.status(500).json({ message: err.message });
   }
 });
 
-
-
-// Get all comments for a post (public)
-router.get('/:id/comments', async (req, res) => {
-  try {
-    const post = await Post.findById(req.params.id);
-    
-    if (!post) {
-      return res.status(404).json({ message: 'Post not found' });
-    }
-
-    const comments = await Comment.find({ post: req.params.id })
-      .populate('author', 'name email')
-      .sort({ createdAt: -1 });
-
-    return res.json({
-      comments,
-      count: comments.length
-    });
-  } catch (err) {
-    return res.status(400).json({ message: 'Invalid post ID' });
-  }
-});
-
-// Add a comment to a post (protected)
-router.post('/:id/comments', auth, async (req, res) => {
+// Add comment
+router.post('/:id/comment', auth, async (req, res) => {
   try {
     const { text } = req.body;
 
-    if (!text || !text.trim()) {
+    if (!text || text.trim() === '') {
       return res.status(400).json({ message: 'Comment text is required' });
     }
 
     const post = await Post.findById(req.params.id);
-    
     if (!post) {
       return res.status(404).json({ message: 'Post not found' });
     }
 
-    const comment = await Comment.create({
+    post.comments.push({
       text: text.trim(),
       author: req.userId,
-      post: req.params.id
+      createdAt: new Date()
     });
 
-    // Populate author details before sending response
-    await comment.populate('author', 'name email');
+    // Create notification for post owner (don't notify self)
+    if (post.creator.toString() !== req.userId) {
+      const notification = new Notification({
+        sender: req.userId,
+        recipient: post.creator,
+        type: 'comment',
+        post: post._id,
+        text: text.trim().substring(0, 100) // Store first 100 chars of comment
+      });
+      await notification.save();
+    }
 
-    return res.status(201).json({
-      message: 'Comment added successfully',
-      comment
-    });
+    await post.save();
+    await post.populate('creator', 'name email profilePicture');
+    await post.populate('comments.author', 'name email profilePicture');
+
+    res.json(post);
   } catch (err) {
-    return res.status(400).json({ message: 'Invalid post ID' });
+    res.status(500).json({ message: err.message });
   }
 });
 
-// Delete a comment (protected, only author can delete)
-router.delete('/:postId/comments/:commentId', auth, async (req, res) => {
+// NEW: Delete comment
+router.delete('/:postId/comment/:commentId', auth, async (req, res) => {
   try {
-    const comment = await Comment.findById(req.params.commentId);
-    
+    const { postId, commentId } = req.params;
+
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res.status(404).json({ message: 'Post not found' });
+    }
+
+    // Find the comment
+    const comment = post.comments.id(commentId);
     if (!comment) {
       return res.status(404).json({ message: 'Comment not found' });
     }
 
-    // Check if user is the author
-    if (comment.author.toString() !== req.userId) {
-      return res.status(403).json({ message: 'Not authorized' });
+    // Check permissions:
+    // 1. User is post owner (can delete any comment anytime)
+    // 2. User is comment author AND within 1 hour
+    const isPostOwner = post.creator.toString() === req.userId;
+    const isCommentAuthor = comment.author.toString() === req.userId;
+
+    // Calculate time difference in hours
+    const commentTime = new Date(comment.createdAt);
+    const currentTime = new Date();
+    const hoursDiff = (currentTime.getTime() - commentTime.getTime()) / (1000 * 60 * 60);
+    const withinOneHour = hoursDiff <= 1;
+
+    if (isPostOwner) {
+      // Post owner can delete any comment
+      post.comments.pull(commentId);
+    } else if (isCommentAuthor && withinOneHour) {
+      // Comment author can delete within 1 hour
+      post.comments.pull(commentId);
+    } else if (isCommentAuthor && !withinOneHour) {
+      return res.status(403).json({
+        message: 'You can only delete your comment within 1 hour of posting'
+      });
+    } else {
+      return res.status(403).json({ message: 'Unauthorized to delete this comment' });
     }
 
-    await Comment.findByIdAndDelete(req.params.commentId);
+    await post.save();
+    await post.populate('creator', 'name email profilePicture');
+    await post.populate('comments.author', 'name email profilePicture');
 
-    return res.json({ message: 'Comment deleted successfully' });
+    res.json(post);
   } catch (err) {
-    return res.status(400).json({ message: 'Invalid comment ID' });
+    console.error('DELETE comment ERROR:', err.message);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// Delete post
+router.delete('/:id', auth, async (req, res) => {
+  try {
+    const post = await Post.findOne({ _id: req.params.id, creator: req.userId });
+    if (!post) {
+      return res.status(404).json({ message: 'Post not found or unauthorized' });
+    }
+
+    await Post.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Post deleted' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 });
 

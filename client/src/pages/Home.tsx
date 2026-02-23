@@ -1,170 +1,199 @@
-import { useState, useEffect, useCallback } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { useAuth } from '@/context/AuthContext'
-import { postsApi } from '@/services/api'
-import { Navbar } from '@/components/ui/Navbar'
-import { CreatePost } from '@/components/ui/CreatePost'
-import { PostCard } from '@/components/ui/PostCard'
-import { FeedSkeleton } from '@/components/ui/Skeleton'
-import { Toast, ToastContainer } from '@/components/ui/Toast'
-import { RefreshCw, MessageSquare } from 'lucide-react'
-import type { Post, ToastType } from '@/types'
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '@/context/AuthContext';
+import { postsApi } from '@/services/api';
+import { Sidebar } from '@/components/ui/Sidebar';
+import { Stories } from '@/components/ui/Stories';
+import { PostCard } from '@/components/ui/PostCard';
+import { CreatePost } from '@/components/ui/CreatePost';
+import { TrendingWidget } from '@/components/ui/TrendingWidget';
+import { Toast, ToastContainer } from '@/components/ui/Toast';
+import type { Post, ToastType } from '@/types';
 
 export default function Home() {
-  const { user } = useAuth()
-  const [posts, setPosts] = useState<Post[]>([])
-  const [loading, setLoading] = useState(true)
-  const [refreshing, setRefreshing] = useState(false)
-  const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null)
+  const { user } = useAuth();
 
-  const fetchPosts = useCallback(async (showLoading = true) => {
-    if (showLoading) setLoading(true)
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
+
+  const observerRef = useRef<HTMLDivElement | null>(null);
+
+  const fetchPosts = useCallback(async (pageNum: number, isInitial = false) => {
     try {
-      const { data } = await postsApi.getAll()
-      setPosts(data.posts)
+      if (isInitial) setLoading(true);
+      else setLoadingMore(true);
+
+      const { data } = await postsApi.getAll(pageNum, 10);
+
+      if (isInitial) {
+        setPosts(data.posts);
+      } else {
+        setPosts(prev => [...prev, ...data.posts]);
+      }
+
+      setHasMore(data.pagination.hasMore);
+      setPage(pageNum);
     } catch (err) {
-      console.error('Failed to fetch posts:', err)
-      showToast('Failed to load posts', 'error')
+      showToast('Failed to load posts', 'error');
     } finally {
-      setLoading(false)
+      setLoading(false);
+      setLoadingMore(false);
     }
-  }, [])
+  }, []);
 
   useEffect(() => {
-    fetchPosts()
-  }, [fetchPosts])
+    fetchPosts(1, true);
+  }, [fetchPosts]);
 
-  const handleRefresh = async () => {
-    setRefreshing(true)
-    await fetchPosts(false)
-    setRefreshing(false)
-  }
+  // Infinite Scroll Observer
+  useEffect(() => {
+    if (loading || !hasMore) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !loadingMore) {
+          fetchPosts(page + 1);
+        }
+      },
+      { threshold: 1.0 }
+    );
+
+    if (observerRef.current) {
+      observer.observe(observerRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [loading, hasMore, loadingMore, page, fetchPosts]);
 
   const showToast = (message: string, type: ToastType = 'info') => {
-    setToast({ message, type })
-    setTimeout(() => setToast(null), 3000)
-  }
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   const handleCreatePost = async (postData: { title: string; content: string; imageUrl: string }) => {
     try {
-      await postsApi.create(postData.title, postData.content, postData.imageUrl)
-      await fetchPosts(false)
-      showToast('Post created successfully!', 'success')
+      await postsApi.create(postData.title, postData.content, postData.imageUrl);
+      await fetchPosts(1, true);
+      showToast('Post created successfully!', 'success');
     } catch (err: any) {
-      console.error('Failed to create post:', err)
-      showToast(err.response?.data?.message || 'Failed to create post', 'error')
-      throw err
+      showToast(err.response?.data?.message || 'Failed to create post', 'error');
+      throw err;
     }
-  }
+  };
 
   const handleLike = async (postId: string) => {
     try {
-      const post = posts.find(p => p._id === postId)
-      if (!post) return
-
-      const isLiked = post.likes.includes(user?._id || '')
-      
+      const post = posts.find(p => p._id === postId);
+      if (!post) return;
+      const isLiked = post.likes?.includes(user?._id || '');
       if (isLiked) {
-        await postsApi.unlike(postId)
+        await postsApi.unlike(postId);
       } else {
-        await postsApi.like(postId)
+        await postsApi.like(postId);
       }
-      
-      await fetchPosts(false)
+      // Optimistic upate or refetch current page? 
+      // For now, let's just update the local state to avoid full refetch
+      setPosts(prev => prev.map(p => {
+        if (p._id === postId) {
+          const newLikes = isLiked
+            ? p.likes.filter(id => id !== user?._id)
+            : [...p.likes, user?._id || ''];
+          return { ...p, likes: newLikes };
+        }
+        return p;
+      }));
     } catch (err) {
-      console.error('Failed to toggle like:', err)
-      showToast('Failed to like post', 'error')
+      showToast('Failed to like post', 'error');
     }
-  }
+  };
 
   const handleComment = async (postId: string, text: string) => {
     try {
-      await postsApi.addComment(postId, text)
-      await fetchPosts(false)
-      showToast('Comment added!', 'success')
+      const { data } = await postsApi.addComment(postId, text);
+      // Update local state with the returned post
+      setPosts(prev => prev.map(p => p._id === postId ? (data as any) : p));
+      showToast('Comment added!', 'success');
     } catch (err: any) {
-      console.error('Failed to add comment:', err)
-      showToast(err.response?.data?.message || 'Failed to add comment', 'error')
+      showToast(err.response?.data?.message || 'Failed to add comment', 'error');
     }
-  }
+  };
+
+  const handleDeleteComment = async (postId: string, commentId: string) => {
+    try {
+      const { data } = await postsApi.deleteComment(postId, commentId);
+      // Update local state
+      setPosts(prev => prev.map(p => p._id === postId ? (data as any) : p));
+      showToast('Comment deleted', 'success');
+    } catch (err: any) {
+      showToast(err.response?.data?.message || 'Failed to delete comment', 'error');
+    }
+  };
 
   const handleDeletePost = async (postId: string) => {
-    if (!confirm('Are you sure you want to delete this post?')) return
-    
+    if (!confirm('Delete this post?')) return;
     try {
-      await postsApi.delete(postId)
-      await fetchPosts(false)
-      showToast('Post deleted successfully!', 'success')
+      await postsApi.delete(postId);
+      setPosts(prev => prev.filter(p => p._id !== postId));
+      showToast('Post deleted', 'success');
     } catch (err) {
-      console.error('Failed to delete post:', err)
-      showToast('Failed to delete post', 'error')
+      showToast('Failed to delete post', 'error');
     }
-  }
-
-  const userId = localStorage.getItem('userId') || undefined
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-      <Navbar />
-      
-      {/* Toast */}
+    <div className="min-h-screen bg-background text-foreground selection:bg-primary/20 selection:text-primary">
+      <Sidebar />
+
       <ToastContainer>
         {toast && <Toast message={toast.message} type={toast.type} />}
       </ToastContainer>
-      
-      <main className="pt-20 pb-12">
-        <div className="max-w-2xl mx-auto px-4 sm:px-6">
-          {/* Create Post Section */}
+
+      <main className="pl-0 md:pl-20 xl:pl-64 xl:pr-80 min-h-screen pb-24 md:pb-6 transition-all duration-500">
+        <div className="max-w-2xl mx-auto py-6 md:py-8 px-4 sm:px-6">
+
+          {/* Stories */}
+          <Stories />
+
+          {/* Create Post */}
           {user && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mb-6"
+              className="mb-8"
             >
               <CreatePost onSubmit={handleCreatePost} />
             </motion.div>
           )}
 
-          {/* Posts Feed */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-                <MessageSquare className="w-5 h-5 text-indigo-600" />
-                Latest Posts
-              </h2>
-              <motion.button
-                onClick={handleRefresh}
-                disabled={refreshing}
-                whileHover={{ scale: 1.1, rotate: 180 }}
-                whileTap={{ scale: 0.9 }}
-                className="p-2 rounded-xl text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors disabled:opacity-50"
-              >
-                <RefreshCw className={cn('w-5 h-5', refreshing && 'animate-spin')} />
-              </motion.button>
-            </div>
-
-            {/* Posts List */}
+          {/* Feed */}
+          <div className="space-y-6">
             {loading ? (
-              <FeedSkeleton count={3} />
+              [...Array(3)].map((_, i) => (
+                <div
+                  key={i}
+                  className="rounded-[2.5rem] h-64 bg-secondary/30 border border-border/40 animate-pulse"
+                />
+              ))
             ) : posts.length === 0 ? (
               <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="text-center py-16"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-center py-24 px-6 rounded-[2.5rem] bg-secondary/20 border border-dashed border-border/60"
               >
-                <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-indigo-50 flex items-center justify-center">
-                  <MessageSquare className="w-12 h-12 text-indigo-300" />
+                <div
+                  className="w-24 h-24 mx-auto mb-8 rounded-3xl flex items-center justify-center bg-primary/10 border border-primary/20 shadow-2xl shadow-primary/10 rotate-3"
+                >
+                  <span className="text-4xl">✨</span>
                 </div>
-                <h3 className="text-xl font-semibold text-slate-900 mb-2">No posts yet</h3>
-                <p className="text-slate-500 mb-6">Be the first to share something with the community!</p>
+                <h3 className="text-2xl font-black mb-3 text-foreground tracking-tight">Your feed is quiet</h3>
+                <p className="text-muted-foreground font-medium max-w-sm mx-auto">Follow more people or start the conversation by sharing your first post!</p>
               </motion.div>
             ) : (
-              <div className="space-y-4">
+              <>
                 <AnimatePresence mode="popLayout">
                   {posts.map((post, index) => (
                     <motion.div
@@ -172,29 +201,47 @@ export default function Home() {
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.95 }}
-                      transition={{ delay: index * 0.05 }}
+                      transition={{ delay: index % 10 * 0.04 }} // Only delay first few in batch
                       layout
                     >
                       <PostCard
                         post={post}
-                        currentUserId={userId}
+                        currentUserId={user?._id}
                         onLike={handleLike}
                         onComment={handleComment}
                         onDelete={handleDeletePost}
+                        onDeleteComment={handleDeleteComment}
                       />
                     </motion.div>
                   ))}
                 </AnimatePresence>
-              </div>
+
+                {/* Loading More / Sentinel */}
+                <div ref={observerRef} className="py-8 flex justify-center">
+                  {loadingMore && (
+                    <div className="flex items-center gap-3 text-primary/60 font-bold">
+                      <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                      <span>Transmitting more signals...</span>
+                    </div>
+                  )}
+                  {!hasMore && posts.length > 0 && (
+                    <div className="text-muted-foreground font-black uppercase tracking-widest text-xs opacity-40">
+                      End of transmission
+                    </div>
+                  )}
+                </div>
+              </>
             )}
-          </motion.div>
+          </div>
         </div>
       </main>
-    </div>
-  )
-}
 
-// Helper function
-function cn(...classes: (string | boolean | undefined)[]) {
-  return classes.filter(Boolean).join(' ')
+      {/* Right Sidebar — only xl+ */}
+      <aside className="fixed right-0 top-0 w-80 h-screen overflow-y-auto p-5 hidden xl:block scrollbar-hide">
+        <div className="space-y-5 pt-4">
+          <TrendingWidget />
+        </div>
+      </aside>
+    </div>
+  );
 }
