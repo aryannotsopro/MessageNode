@@ -3,6 +3,7 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
+const path = require('path');
 require('dotenv').config();
 
 const authRoutes = require('./routes/auth');
@@ -77,7 +78,7 @@ const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
-app.use('/uploads', express.static('uploads'));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(express.urlencoded({ extended: true }));
 
 app.get('/api/me', auth, (req, res) => res.json({ user: req.user }));
@@ -88,8 +89,16 @@ app.use('/api/stories', storiesRoutes);
 app.use('/api/messages', messagesRoutes);
 app.use('/api/notifications', notificationsRoutes);
 
-app.get('/', (req, res) => res.send('MessageNode Server Running'));
 app.get('/api/health', (req, res) => res.json({ status: 'ok', onlineUsers: global.onlineUsers.size }));
+
+// Serve static files from the React app
+app.use(express.static(path.join(__dirname, '../client/dist')));
+
+// The "catchall" handler: for any request that doesn't
+// match one above, send back React's index.html file.
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../client/dist/index.html'));
+});
 
 mongoose
   .connect(process.env.MONGODB_URI)
